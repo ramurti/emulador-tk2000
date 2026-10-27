@@ -26,7 +26,7 @@ public:
 	// CDevice
 	byte read(const word addr, const uint64_t cycles) override;
 	void write(const word addr, const byte data, const uint64_t cycles) override {};
-	void update(const uint64_t cycles) override {};
+	void update(const uint64_t cycles) override;
 	void reset() override;
 	// Native
 	void play() noexcept;
@@ -42,4 +42,7 @@ private:
 	word mCyclesNeeded;
 	byte mCasOut{ 0 };
 	bool mPlay{ false };
+	uint64_t mLastReadCycle{ 0 };
+	unsigned mFastReads{ 0 };			// Consecutive reads close together (a loader polling the tape)
+	uint64_t mLastLoadCycle{ 0 };		// Last time a loader was polling the tape
 };

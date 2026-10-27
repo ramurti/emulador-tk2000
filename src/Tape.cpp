@@ -29,6 +29,12 @@ struct SCh {
 };
 #pragma pack(pop)
 
+// A tape loader polls the cassette input in a tight loop; other programs (e.g. a game reading
+// the keyboard, which shares the address) read it sparsely. Full speed is kept only while loading.
+constexpr uint64_t FAST_READ_CYCLES = 200;
+constexpr unsigned FAST_READS_LOADING = 64;
+constexpr uint64_t LOAD_IDLE_CYCLES = CPU_CLOCK / 2;		// 0.5 s
+
 /*************************************************************************************************/
 CTape::CTape(CBus& bus, CCpu6502& cpu) :
 	mCpu(cpu),
@@ -48,6 +54,20 @@ byte CTape::read(const word addr, const uint64_t cycles) {
 			return 0x00;
 		}
 		const unsigned long long actualCycle = mCpu.getCumulativeCycles();
+		if (actualCycle - mLastReadCycle < FAST_READ_CYCLES) {
+			if (++mFastReads >= FAST_READS_LOADING) {
+				mLastLoadCycle = actualCycle;
+				mCpu.setFullSpeed(true);
+			}
+		} else {
+			mFastReads = 0;
+		}
+		mLastReadCycle = actualCycle;
+		// Sparse reads (e.g. the keyboard, at the same address) while no loader is active don't move the
+		// tape, as if the recorder had been stopped: programs loaded in parts ask to stop and restart it
+		if (actualCycle - mLastLoadCycle > LOAD_IDLE_CYCLES) {
+			return mCasOut;
+		}
 		if (mStartCycle == 0 && mQueueIt != mQueueCycles.end()) {
 			mStartCycle = actualCycle;
 			mCyclesNeeded = (*mQueueIt);
@@ -69,6 +89,14 @@ byte CTape::read(const word addr, const uint64_t cycles) {
 }
 
 /*************************************************************************************************/
+void CTape::update(const uint64_t cycles) {
+	// Back to normal speed when the program stops loading (e.g. a game started before the tape end)
+	if (mPlay && mCpu.getFullSpeed() && cycles - mLastLoadCycle > LOAD_IDLE_CYCLES) {
+		mCpu.setFullSpeed(false);
+	}
+}
+
+/*************************************************************************************************/
 void CTape::reset() {
 	mPlay = false;
 	mStartCycle = 0;
@@ -78,6 +106,7 @@ void CTape::reset() {
 void CTape::play() noexcept {
 	if (mQueueIt != mQueueCycles.end()) {
 		mPlay = true;
+		mLastLoadCycle = mCpu.getCumulativeCycles();
 		mCpu.setFullSpeed(true);
 	}
 }
