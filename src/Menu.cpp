@@ -68,8 +68,10 @@ int CMenu::getSelected() const {
 
 /*****************************************************************************/
 void CMenu::render() {
-	int w, h;
-	SDL_GetRendererOutputSize(mRenderer, &w, &h);
+	// Viewport = size of the current render target (the output size ignores it on some SDL versions)
+	SDL_Rect vp;
+	SDL_RenderGetViewport(mRenderer, &vp);
+	int w = vp.w, h = vp.h;
 	int max = std::min((int)mMenuLst.size(), MAX_ITEMS);
 	int yPos = (h - (max-1) * FONT_HEIGHT) / 2;		// -1 to skip title
 	if (mSelected > mFirst + max) {

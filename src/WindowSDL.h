@@ -36,9 +36,17 @@ private:
 	int mMenuSel = -1;
 	SDL_Texture* mCpuIcon{};
 	SDL_Texture* mTapeIcon{};
+	SDL_Texture* mTarget{};				// Emulated screen + icons + menu, composed before scaling
+	SDL_Texture* mFrame{};				// Computer/monitor picture with a transparent glass area
+	int mFrameW{ 0 };
+	int mFrameH{ 0 };
+	SDL_Rect mGlassRect{};				// Bounding box of the transparent glass area in mFrame
+	bool mShowFrame{ false };
 private:
 	void setScanline(bool val) noexcept;
 	void setFullScreen(bool val) noexcept;
+	void setShowFrame(bool val) noexcept;
+	void loadFrame();
 public:
 	CWindowSDL(CVideo& video);
 	~CWindowSDL();

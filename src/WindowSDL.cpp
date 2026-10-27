@@ -18,6 +18,11 @@
 #include "WindowSDL.h"
 #include "Video.h"
 #include "media.h"
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#include "stb_image.h"
+
+static const char* FRAME_FILE = "tk2000-frame.png";
 
 
 /*****************************************************************************/
@@ -28,14 +33,71 @@ void CWindowSDL::setScanline(bool val) noexcept {
 /*****************************************************************************/
 void CWindowSDL::setFullScreen(bool val) noexcept {
 	mFullScreen = val;
-	if (mFullScreen) {
-		SDL_DisplayMode dm;
-		SDL_GetDesktopDisplayMode(0, &dm);
-		SDL_SetWindowSize(mWindow, dm.w, dm.h);
-		SDL_SetWindowFullscreen(mWindow, SDL_WINDOW_FULLSCREEN);
-	} else {
-		SDL_SetWindowFullscreen(mWindow, 0);
-		SDL_SetWindowSize(mWindow, VIDEOWIDTH * 2, VIDEOHEIGHT * 2);
+	SDL_SetWindowFullscreen(mWindow, mFullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+}
+
+/*****************************************************************************/
+void CWindowSDL::setShowFrame(bool val) noexcept {
+	mShowFrame = val && mFrame != nullptr;
+	int w = mShowFrame ? mFrameW : VIDEOWIDTH * 2;
+	int h = mShowFrame ? mFrameH : VIDEOHEIGHT * 2;
+	// Render at a fixed logical resolution, SDL scales it to the window size keeping the aspect ratio
+	SDL_RenderSetLogicalSize(mRenderer, w, h);
+	// Smooth scaling for the screen inside the frame, sharp pixels otherwise
+	SDL_SetTextureScaleMode(mTarget, mShowFrame ? SDL_ScaleModeLinear : SDL_ScaleModeNearest);
+	if (!mFullScreen) {
+		// Default window size: 1200 wide with frame, 3x without, limited to the usable display area
+		int winW = mShowFrame ? 1200 : VIDEOWIDTH * 3;
+		int winH = winW * h / w;
+		SDL_Rect usable;
+		if (SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(mWindow), &usable) == 0 && winH > usable.h * 9 / 10) {
+			winH = usable.h * 9 / 10;
+			winW = winH * w / h;
+		}
+		SDL_SetWindowSize(mWindow, winW, winH);
+	}
+}
+
+/*****************************************************************************/
+void CWindowSDL::loadFrame() {
+	// Look next to the executable first, then in the res directory (running from the repository root)
+	std::string paths[2];
+	char* base = SDL_GetBasePath();
+	if (base) {
+		paths[0] = std::string(base) + FRAME_FILE;
+		SDL_free(base);
+	}
+	paths[1] = std::string("res/") + FRAME_FILE;
+	for (auto& path : paths) {
+		int w, h, n;
+		byte* data = path.empty() ? nullptr : stbi_load(path.c_str(), &w, &h, &n, 4);
+		if (!data) {
+			continue;
+		}
+		// Glass area = bounding box of the transparent pixels
+		int x0 = w, y0 = h, x1 = -1, y1 = -1;
+		for (int y = 0; y < h; y++) {
+			for (int x = 0; x < w; x++) {
+				if (data[(y * w + x) * 4 + 3] < 128) {
+					x0 = std::min(x0, x); x1 = std::max(x1, x);
+					y0 = std::min(y0, y); y1 = std::max(y1, y);
+				}
+			}
+		}
+		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(data, w, h, 32, w * 4, SDL_PIXELFORMAT_RGBA32);
+		if (surface && x1 >= 0) {
+			mFrame = SDL_CreateTextureFromSurface(mRenderer, surface);
+			SDL_SetTextureBlendMode(mFrame, SDL_BLENDMODE_BLEND);
+			SDL_SetTextureScaleMode(mFrame, SDL_ScaleModeLinear);
+			mFrameW = w;
+			mFrameH = h;
+			mGlassRect = { x0, y0, x1 - x0 + 1, y1 - y0 + 1 };
+		}
+		SDL_FreeSurface(surface);
+		stbi_image_free(data);
+		if (mFrame) {
+			return;
+		}
 	}
 }
 
@@ -44,7 +106,8 @@ CWindowSDL::CWindowSDL(CVideo& video) :
 	mVideo(video)
 {
 	mWindow = SDL_CreateWindow("TK2000 Emulator", SDL_WINDOWPOS_UNDEFINED,
-		SDL_WINDOWPOS_UNDEFINED, VIDEOWIDTH * 2, VIDEOHEIGHT * 2, SDL_WINDOW_SHOWN);
+		SDL_WINDOWPOS_UNDEFINED, VIDEOWIDTH * 3, VIDEOHEIGHT * 3,
+		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
 	if (!mWindow) {
 		std::string error{ "Window could not be created! SDL Error: " };
@@ -65,6 +128,13 @@ CWindowSDL::CWindowSDL(CVideo& video) :
 		error.append(SDL_GetError());
 		throw std::runtime_error(error);
 	}
+	mTarget = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+		VIDEOWIDTH * 2, VIDEOHEIGHT * 2);
+	if (!mTarget) {
+		std::string error{ "Error creating target texture! SDL Error: " };
+		error.append(SDL_GetError());
+		throw std::runtime_error(error);
+	}
 	mScreen = SDL_CreateTexture(mRenderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_STREAMING,
 		VIDEOWIDTH, VIDEOHEIGHT * 2);
 	if (!mScreen) {
@@ -80,12 +150,17 @@ CWindowSDL::CWindowSDL(CVideo& video) :
 	SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, 0, 0, 0));
 	mTapeIcon = SDL_CreateTextureFromSurface(mRenderer, surface);
 	SDL_FreeSurface(surface);
+	// Optional frame picture; without it, only the screen is shown
+	loadFrame();
+	setShowFrame(true);
 }
 
 /*****************************************************************************/
 CWindowSDL::~CWindowSDL() {
 	SDL_DestroyTexture(mCpuIcon);
 	SDL_DestroyTexture(mTapeIcon);
+	SDL_DestroyTexture(mFrame);
+	SDL_DestroyTexture(mTarget);
 	SDL_DestroyTexture(mScreen);
 	SDL_DestroyRenderer(mRenderer);		//Free resources and close SDL
 	SDL_DestroyWindow(mWindow);			//Destroy window
@@ -93,8 +168,10 @@ CWindowSDL::~CWindowSDL() {
 
 /*****************************************************************************/
 void CWindowSDL::render(bool cpuState, bool tapeState) {
-	SDL_SetRenderTarget(mRenderer, nullptr);
+	// Compose the emulated screen, icons and menu at native size
+	SDL_SetRenderTarget(mRenderer, mTarget);
 	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(mRenderer);
 	char* fb = (char*)mVideo.getFrameBuffer();
 	char* ptr;
 	int pitch;
@@ -145,6 +222,25 @@ void CWindowSDL::render(bool cpuState, bool tapeState) {
 	if (mMenu) {
 		mMenu->render();
 	}
+
+	// Scale the composed screen to the window, inside the monitor glass when the frame is shown
+	SDL_SetRenderTarget(mRenderer, nullptr);
+	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(mRenderer);			// Clear letterbox borders
+	if (mShowFrame) {
+		// Dark CRT glass, picture with some overscan margin, frame on top hides the glass corners.
+		// The picture is added to the glass color, so its black is exactly the glass color.
+		SDL_SetRenderDrawColor(mRenderer, 16, 20, 18, SDL_ALPHA_OPAQUE);
+		SDL_RenderFillRect(mRenderer, &mGlassRect);
+		SDL_Rect pic{ mGlassRect.x + mGlassRect.w * 6 / 100, mGlassRect.y + mGlassRect.h * 7 / 100,
+			mGlassRect.w * 88 / 100, mGlassRect.h * 86 / 100 };
+		SDL_SetTextureBlendMode(mTarget, SDL_BLENDMODE_ADD);
+		SDL_RenderCopy(mRenderer, mTarget, nullptr, &pic);
+		SDL_RenderCopy(mRenderer, mFrame, nullptr, nullptr);
+	} else {
+		SDL_SetTextureBlendMode(mTarget, SDL_BLENDMODE_NONE);
+		SDL_RenderCopy(mRenderer, mTarget, nullptr, nullptr);
+	}
 	// Present the screen
 	SDL_RenderPresent(mRenderer);
 }
@@ -160,12 +256,6 @@ bool CWindowSDL::loop() {
 		switch (e.type) {
 		case SDL_QUIT:
 			return true;
-
-		case SDL_RENDER_TARGETS_RESET:
-			if (!mFullScreen) {
-				SDL_SetWindowSize(mWindow, VIDEOWIDTH * 2, VIDEOHEIGHT * 2);
-			}
-			break;
 
 		case SDL_KEYDOWN:
 			switch (e.key.keysym.sym) {
@@ -198,6 +288,11 @@ bool CWindowSDL::loop() {
 
 			case SDLK_F8:
 				setFullScreen(!mFullScreen);
+				processed = true;
+				break;
+
+			case SDLK_F9:
+				setShowFrame(!mShowFrame);
 				processed = true;
 				break;
 

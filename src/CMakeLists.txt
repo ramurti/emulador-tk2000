@@ -29,13 +29,19 @@ add_executable (tk2000 WIN32
   Rom.cpp Rom.h
   Tape.cpp Tape.h
   Video.cpp Video.h
-  WindowSDL.cpp WindowSDL.h
+  WindowSDL.cpp WindowSDL.h stb_image.h
  "media.h")
 
 # Precompiled headers
 target_precompile_headers(tk2000 PUBLIC pch.h)
 if (UNIX)
-  target_link_libraries(tk2000 pthread)
+  target_link_libraries(tk2000 Threads::Threads)
 endif()
 
 target_link_libraries(tk2000 ${SDLGUI_EXTRA_LIBS} ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2TTF_LIBRARY})
+
+# Frame picture shown around the emulated screen (optional at runtime), copied whenever it changes
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/res/tk2000-frame.png" "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png"
+  DEPENDS "${PROJECT_SOURCE_DIR}/res/tk2000-frame.png")
+add_custom_target(tk2000-frame ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png")
