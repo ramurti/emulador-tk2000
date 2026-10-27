@@ -26,9 +26,24 @@ public:
 	// CDevice
 	byte read(const word addr, const uint64_t cycles) override;
 	void write(const word addr, const byte data, const uint64_t cycles) override;
-	void update(const uint64_t cycles) override {};
+	void update(const uint64_t cycles) override;
 	void reset() override;
 	void keyEvent(SDL_KeyboardEvent&);
+	// Simulated typing (e.g. a BASIC listing), timed in emulated CPU cycles
+	void typeText(const std::string& text);
+	bool isTyping();
+private:
+	struct STypedKey {
+		SDL_Keycode sym;		// 0 = only wait
+		bool shift;
+		uint64_t waitCycles;	// pause after releasing the key
+	};
+	std::mutex mTypeMutex;
+	std::deque<STypedKey> mTypeQueue;
+	bool mTypeKeyDown{ false };
+	uint64_t mTypeNextCycle{ 0 };
+	uint64_t mLastReadCycle{ 0 };		// Last time the ROM scanned the keyboard
+	uint64_t mScanStartCycle{ 0 };		// Start of the current continuous scanning period
 private:
 	byte mMatrix[8]{ 0 };
 	bool mCtrl{ false };

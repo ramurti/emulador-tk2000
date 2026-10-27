@@ -43,8 +43,8 @@ public:
 private:
 	CBus mBus{};
 	CCpu6502 mCpu{ mBus };
-	CRom mRom{ mBus };
 	CRam mRam{ mBus };
+	CRom mRom{ mBus, mRam.mRam };
 	CVideo mVideo{ mBus, mRam.mRam };
 	CAudio mAudio{ mBus, mCpu };
 	CKeyboard mKeyboard{ mBus };
@@ -55,7 +55,11 @@ private:
 	CMenu* mCpuMenu = nullptr;
 	CMenu* mFilesMenu = nullptr;
 	bool mCpuPaused = true;
+	std::string mFilesExt{ ".ct2" };		// Extension shown in the file menu
+	bool mTypingFile = false;				// Typing a BASIC file at full speed
+	bool mSpeedBeforeTyping = false;
 private:
 	void fillFilesLst();
+	void typeBasFile(const std::string& fileName);
 
 };

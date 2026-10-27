@@ -16,15 +16,26 @@
 
 #include "pch.h"
 #include "Machine.h"
+#include <fstream>
 
 /* Constants */
 
-TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape" };
+TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Type BASIC file" };
 TMenuLst cpuSpeedLst{ "1 MHz", "2 MHz", "Full speed" };
 TMenuLst filesLst{ "." };
 
 namespace fs = std::filesystem;
-std::string curpath = fs::current_path().string();
+// Start the tape browser in the current directory, or in the home directory when launched
+// from the root (e.g. a macOS app opened from Finder)
+static std::string initialPath() {
+	fs::path p = fs::current_path();
+	const char* home = getenv("HOME");
+	if (p == p.root_path() && home) {
+		return home;
+	}
+	return p.string();
+}
+std::string curpath = initialPath();
 
 /*************************************************************************************************/
 void CMachine::fillFilesLst() {
@@ -51,7 +62,9 @@ void CMachine::fillFilesLst() {
 			if (fs::is_directory(status)) {
 				dirs.emplace_back("[" + filename.string() + "]");
 			} else {
-				if (filename.extension().string() == ".ct2")
+				std::string ext = filename.extension().string();
+				std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+				if (ext == mFilesExt)
 					files.emplace_back(filename.string());
 			}
 		}
@@ -82,6 +95,30 @@ void CMachine::fillFilesLst() {
 	mFilesMenu->setMenuLst(lst);
 }
 
+
+/*************************************************************************************************/
+// Type a BASIC listing (text file) into the emulated keyboard, after a NEW, at full speed
+void CMachine::typeBasFile(const std::string& fileName) {
+	std::ifstream file(fileName, std::ios::binary);
+	if (!file) {
+		return;
+	}
+	std::string text = "NEW\n";
+	std::string line;
+	while (std::getline(file, line)) {
+		if (!line.empty() && line.back() == '\r') {
+			line.pop_back();
+		}
+		text += line + "\n";
+	}
+	mKeyboard.typeText(text);
+	if (!mTypingFile) {
+		mSpeedBeforeTyping = mCpu.getFullSpeed();
+	}
+	mTypingFile = true;
+	mCpu.setFullSpeed(true);
+	mCpuPaused = false;
+}
 
 /*************************************************************************************************/
 CMachine::CMachine() {
@@ -182,6 +219,11 @@ bool CMachine::loop() {
 	//While application is running
 	while (!quit) {
 		quit = mWindow.loop();
+		// Back to the previous speed when the BASIC file has been typed
+		if (mTypingFile && !mKeyboard.isTyping()) {
+			mTypingFile = false;
+			mCpu.setFullSpeed(mSpeedBeforeTyping);
+		}
 		// Render screen
 		mWindow.render(mCpuPaused == false, mTape.getPlayState());
 		int menuSel = mWindow.getMenuSel();
@@ -210,6 +252,7 @@ bool CMachine::loop() {
 					break;
 
 				case 4:								// Insert tape
+					mFilesExt = ".ct2";
 					fillFilesLst();
 					menu = mFilesMenu;
 					break;
@@ -220,6 +263,12 @@ bool CMachine::loop() {
 
 				case 6:								// Rewind tape
 					mTape.rewind();
+					break;
+
+				case 7:								// Type BASIC file
+					mFilesExt = ".bas";
+					fillFilesLst();
+					menu = mFilesMenu;
 					break;
 				}
 			} else if (mWindow.getMenu() == mCpuMenu) {
@@ -265,6 +314,8 @@ bool CMachine::loop() {
 					fs::current_path(curpath);
 					fillFilesLst();
 					menu = mFilesMenu;
+				} else if (mFilesExt == ".bas") {
+					typeBasFile(cur);				// Type BASIC listing
 				} else {
 					mTape.insertCt2(cur.c_str());	// Load file
 				}

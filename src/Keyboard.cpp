@@ -34,6 +34,9 @@
 */
 
 
+// Gap between keyboard reads that means the ROM is not waiting for a key
+constexpr uint64_t SCAN_GAP_CYCLES = CPU_CLOCK * 2 / 1000;			// 2 ms
+
 /*************************************************************************************************/
 CKeyboard::CKeyboard(CBus& bus) {
 	bus.addDevice(EDevices::KEYBOARD, this);
@@ -43,6 +46,10 @@ CKeyboard::CKeyboard(CBus& bus) {
 
 /*************************************************************************************************/
 byte CKeyboard::read(const word addr, const uint64_t cycles) {
+	if (cycles - mLastReadCycle > SCAN_GAP_CYCLES) {
+		mScanStartCycle = cycles;
+	}
+	mLastReadCycle = cycles;
 	if (mKbOut == 1 && mShift) {
 		return 1;
 	}
@@ -76,6 +83,85 @@ void CKeyboard::reset() {
 	}
 	mCtrl = false;
 	mShift = false;
+	std::lock_guard<std::mutex> lock(mTypeMutex);
+	mTypeQueue.clear();
+	mTypeKeyDown = false;
+}
+
+/*************************************************************************************************/
+// Simulated typing: press and release one queued key at a time, giving the ROM time to scan it
+void CKeyboard::update(const uint64_t cycles) {
+	constexpr uint64_t KEY_DOWN_CYCLES = CPU_CLOCK * 40 / 1000;		// 40 ms
+	constexpr uint64_t SCAN_STEADY_CYCLES = CPU_CLOCK * 10 / 1000;		// 10 ms
+	std::lock_guard<std::mutex> lock(mTypeMutex);
+	if (mTypeQueue.empty() || cycles < mTypeNextCycle) {
+		return;
+	}
+	// Only press a key while the ROM is steadily scanning the keyboard (waiting for input); it stops
+	// scanning while busy (e.g. scrolling the screen after a RETURN) and a key pressed then is lost
+	const bool scanning = cycles - mLastReadCycle <= SCAN_GAP_CYCLES && cycles - mScanStartCycle >= SCAN_STEADY_CYCLES;
+	if (!mTypeKeyDown && mTypeQueue.front().sym != 0 && !scanning) {
+		return;
+	}
+	const STypedKey& k = mTypeQueue.front();
+	if (k.sym == 0) {
+		mTypeNextCycle = cycles + k.waitCycles;
+		mTypeQueue.pop_front();
+		return;
+	}
+	SDL_KeyboardEvent e{};
+	e.keysym.sym = k.sym;
+	e.keysym.mod = k.shift ? KMOD_LSHIFT : KMOD_NONE;
+	if (!mTypeKeyDown) {
+		e.state = SDL_PRESSED;
+		keyEvent(e);
+		mTypeKeyDown = true;
+		mTypeNextCycle = cycles + KEY_DOWN_CYCLES;
+	} else {
+		e.state = SDL_RELEASED;
+		keyEvent(e);
+		mShift = false;
+		mTypeKeyDown = false;
+		mTypeNextCycle = cycles + k.waitCycles;
+		mTypeQueue.pop_front();
+	}
+}
+
+/*************************************************************************************************/
+// Queue text to be typed; characters without a TK2000 key are skipped, lowercase becomes uppercase
+void CKeyboard::typeText(const std::string& text) {
+	constexpr uint64_t START_CYCLES = CPU_CLOCK * 3;				// 3 s, time for the ROM to boot if needed
+	constexpr uint64_t KEY_UP_CYCLES = CPU_CLOCK * 40 / 1000;		// 40 ms
+	constexpr uint64_t RETURN_CYCLES = CPU_CLOCK * 300 / 1000;		// 300 ms, time for BASIC to store the line
+	static const std::string keys = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !\"#$%&'()*+,-./:;<=>?@^";
+	std::lock_guard<std::mutex> lock(mTypeMutex);
+	mTypeQueue.push_back({ 0, false, START_CYCLES });
+	for (char c : text) {
+		if (c == '\n') {
+			mTypeQueue.push_back({ SDLK_RETURN, false, RETURN_CYCLES });
+			continue;
+		}
+		if (c == '\t') {
+			c = ' ';
+		}
+		c = (char)toupper((unsigned char)c);
+		if (keys.find(c) == std::string::npos) {
+			continue;
+		}
+		if (c >= 'A' && c <= 'Z') {
+			mTypeQueue.push_back({ (SDL_Keycode)tolower(c), false, KEY_UP_CYCLES });
+		} else if (c == '<' || c == '>') {
+			mTypeQueue.push_back({ c == '<' ? SDLK_COMMA : SDLK_PERIOD, true, KEY_UP_CYCLES });
+		} else {
+			mTypeQueue.push_back({ (SDL_Keycode)c, false, KEY_UP_CYCLES });	// SDL keycodes are ASCII
+		}
+	}
+}
+
+/*************************************************************************************************/
+bool CKeyboard::isTyping() {
+	std::lock_guard<std::mutex> lock(mTypeMutex);
+	return !mTypeQueue.empty();
 }
 
 /*************************************************************************************************/
