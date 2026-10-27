@@ -20,12 +20,16 @@
 #include "Device.h"
 #include "Bus.h"
 
+// ROM at $C100-$FFFF. On the 64K TK2000 II, RAM under the ROM is selected by $C05B and the
+// ROM again by $C05A; writes to $C100-$FFFF always go to the RAM.
 class CRom final : public CDevice {
 public:
-	CRom(CBus& bus);
+	CRom(CBus& bus, byte* ramPtr);
 	byte read(const word addr, const uint64_t cycles) override;
-	void write(const word addr, const byte data, const uint64_t cycles) override {};
+	void write(const word addr, const byte data, const uint64_t cycles) override;
 	void update(const uint64_t cycles) override {}
-	void reset() override {}
+	void reset() override;
 private:
+	byte* mRamPtr = nullptr;
+	bool mRamSelected{ false };
 };

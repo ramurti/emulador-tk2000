@@ -1046,12 +1046,34 @@ const byte romImage[16384] = {
 };
 
 /*************************************************************************************************/
-CRom::CRom(CBus& bus) {
+CRom::CRom(CBus& bus, byte* ramPtr) :
+	mRamPtr(ramPtr)
+{
+	assert(ramPtr != nullptr);
 	bus.addDevice(EDevices::ROM, this);
+	bus.registerAddr(EDevices::ROM, 0xC05A, 0xC05B);
 	bus.registerAddr(EDevices::ROM, 0xC100, 0xFFFF);
 }
 
 /*************************************************************************************************/
 byte CRom::read(word addr, const uint64_t cycles) {
-	return romImage[addr & 0x3FFF];
+	if (addr == 0xC05A || addr == 0xC05B) {
+		mRamSelected = addr == 0xC05B;
+		return 0xFF;
+	}
+	return mRamSelected ? mRamPtr[addr] : romImage[addr & 0x3FFF];
+}
+
+/*************************************************************************************************/
+void CRom::write(word addr, const byte data, const uint64_t cycles) {
+	if (addr == 0xC05A || addr == 0xC05B) {
+		read(addr, cycles);
+		return;
+	}
+	mRamPtr[addr] = data;
+}
+
+/*************************************************************************************************/
+void CRom::reset() {
+	mRamSelected = false;		// The CPU must find the reset vector in the ROM
 }
