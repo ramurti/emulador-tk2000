@@ -20,9 +20,10 @@
 
 /* Constants */
 
-TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Type BASIC file" };
+TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file" };
 TMenuLst cpuSpeedLst{ "1 MHz", "2 MHz", "Full speed" };
 TMenuLst filesLst{ "." };
+TMenuLst msgLst{ "OK" };
 
 namespace fs = std::filesystem;
 // Start the tape browser in the current directory, or in the home directory when launched
@@ -133,6 +134,7 @@ CMachine::CMachine() {
 	mMainMenu = new CMenu(mainLst, mWindow.getRenderer(), "Main");
 	mCpuMenu = new CMenu(cpuSpeedLst, mWindow.getRenderer(), "CPU Speed");
 	mFilesMenu = new CMenu(filesLst, mWindow.getRenderer(), "Choose file");
+	mMsgMenu = new CMenu(msgLst, mWindow.getRenderer(), "");
 }
 
 /*************************************************************************************************/
@@ -265,7 +267,23 @@ bool CMachine::loop() {
 					mTape.rewind();
 					break;
 
-				case 7:								// Type BASIC file
+				case 7: {							// Record tape: the inserted tape as a WAV
+					std::string wavName;
+					auto& lst = mMsgMenu->getMenuLst();
+					lst.clear();
+					if (mTape.saveWav(wavName)) {
+						mMsgMenu->getTitle() = "Tape saved as";
+						lst.emplace_back(wavName);
+					} else {
+						mMsgMenu->getTitle() = "Record tape";
+						lst.emplace_back("No tape inserted or write error");
+					}
+					mMsgMenu->setMenuLst(lst);
+					menu = mMsgMenu;
+					break;
+				}
+
+				case 8:								// Type BASIC file
 					mFilesExt = ".bas";
 					fillFilesLst();
 					menu = mFilesMenu;

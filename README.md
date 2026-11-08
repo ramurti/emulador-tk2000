@@ -2,7 +2,7 @@
 
 **About this repository**
 
-The TK2000 emulator was created by **Fabio Belavenuto** (FBLabs), originally published at https://github.com/fbelavenuto/tk2000. This repository preserves his full history and continues the project, adding macOS support, a resizable window with a TK2000 monitor frame, a menu option to type BASIC files, 64K memory (RAM under the ROM), faster tape loading and a macOS installer.
+The TK2000 emulator was created by **Fabio Belavenuto** (FBLabs), originally published at https://github.com/fbelavenuto/tk2000. This repository preserves his full history and continues the project, adding macOS support, a resizable window with a TK2000 monitor frame, a menu option to type BASIC files, 64K memory (RAM under the ROM), faster tape loading, recording the inserted tape as a WAV for a real TK2000 and a macOS installer.
 
 *In memory of Fabio Belavenuto.*
 
@@ -17,6 +17,8 @@ I used the SDL2 graphics library to render the image and generate sound. For con
 Download the latest release and unzip it to a folder, no installation required. To use SDL2 it is necessary that some libraries (supplied) are included with the binary.
 
 Run the binary. To call up the menu, press F2 on the keyboard and use the up and down arrow keys to navigate. Use the ENTER key to accept the selected menu.
+
+"Record tape (WAV)" saves the inserted tape (all its files, exactly the same blocks) as a WAV next to the `.ct2`, ready to load on a real TK2000 with `LOADT`. An existing WAV is never overwritten: the new one gets a `-2`, `-3`... suffix.
 
 # Development
 
@@ -70,6 +72,8 @@ Usei a biblioteca gráfica SDL2 para fazer a renderização da imagem e geraçã
 Baixe o último release e descompacte em alguma pasta, não é necessário instalação. Por usar o SDL2 é necessário que algumas bibliotecas (fornecido) estejam junto ao binário.
 
 Execute o binário. Para chamar o menu aperte F2 no teclado e use as setas direcionais para cima e para baixo para navegar. Utilize a tecla ENTER para aceitar o menu selecionado.
+
+"Record tape (WAV)" grava a fita inserida (todos os arquivos, exatamente os mesmos blocos) num WAV ao lado do `.ct2`, pronto para carregar num TK2000 real com `LOADT`. Um WAV existente nunca é sobrescrito: o novo ganha o sufixo `-2`, `-3`...
 
 # Desenvolvimento
 

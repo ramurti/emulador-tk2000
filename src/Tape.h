@@ -34,7 +34,11 @@ public:
 	void rewind() noexcept;
 	bool getPlayState() const noexcept;
 	bool insertCt2(const char *fileName);
+	bool saveWav(std::string& wavName) const;
 private:
+	using TBlocks = std::vector<std::vector<byte>>;
+	std::vector<TBlocks> mFiles;		// The inserted tape's files (CA) and their data blocks (DA)
+	std::string mFileName;				// The inserted tape (absolute path)
 	CCpu6502& mCpu;
 	unsigned long long mStartCycle{ 0 };
 	std::vector<word> mQueueCycles;
