@@ -1240,8 +1240,8 @@ void CCpu6502::executeOpcode() {
 		accCycles(2);
 		break;
 
-	default: // unknown instructions
-		accCycles(2);
+	default: // undocumented instructions
+		executeUndocumented(opcode);
 	}
 	// Check interrupts
 	if ((interruptFlags & INT_NMI) != 0) {
@@ -1263,3 +1263,182 @@ void CCpu6502::executeOpcode() {
 	}
 }
 
+
+/*************************************************************************************************/
+void CCpu6502::adc(const byte operand) {
+	word result = operand + mRegA + (getC() ? 1 : 0);
+	setV(!(((operand ^ mRegA) & 0x80) != 0)
+		&& (((mRegA ^ result) & 0x80) != 0));
+	if (getD()) {
+		result = m_BCDTableAdd[result];
+	}
+	setC((result & 0x100) != 0);
+	mRegA = result & 0xFF;
+	setNZ(mRegA);
+}
+
+/*************************************************************************************************/
+void CCpu6502::sbc(const byte operand) {
+	const byte inverted = 255 - operand;
+	word result = inverted + mRegA + (getC() ? 1 : 0);
+	setV(!(((inverted ^ mRegA) & 0x80) != 0)
+		&& (((mRegA ^ result) & 0x80) != 0));
+	if (getD()) {
+		result = m_BCDTableSub[result];
+	}
+	setC((result & 0x100) != 0);
+	mRegA = result & 0xFF;
+	setNZ(mRegA);
+}
+
+/*************************************************************************************************/
+// The NMOS 6502's undocumented opcodes. Programs run into them (the TK2000 ROM's $FB2F, which
+// Apple DOS calls as INIT, is the middle of an instruction: $17, SLO zp,X), so they take their
+// real length. Column 3 (opcode & 3 == 3): a read-modify-write and an ALU operation (SLO, RLA,
+// SRE, RRA, DCP, ISC), SAX, LAX, and the immediate ones (ANC, ALR, ARR, XAA, LAX, AXS, SBC).
+// The others are NOPs with an operand, or jams (here 1-byte NOPs).
+void CCpu6502::executeUndocumented(const byte opcode) {
+	byte operand;
+	word addr;
+	const int mode = (opcode >> 2) & 7;
+	if ((opcode & 3) != 3) {
+		switch (opcode) {
+		case 0x80: case 0x82: case 0x89: case 0xC2: case 0xE2:		// NOP #imm
+			eaimm();
+			accCycles(2);
+			break;
+		case 0x04: case 0x44: case 0x64:							// NOP zp
+			eazp();
+			accCycles(3);
+			break;
+		case 0x14: case 0x34: case 0x54: case 0x74: case 0xD4: case 0xF4:	// NOP zp,X
+			eazpx();
+			accCycles(4);
+			break;
+		case 0x0C:													// NOP abs
+			eaabs();
+			accCycles(4);
+			break;
+		case 0x1C: case 0x3C: case 0x5C: case 0x7C: case 0xDC: case 0xFC:	// NOP abs,X
+			eaabsx();
+			accCycles(4);
+			break;
+		default:													// NOP, jams
+			accCycles(2);
+		}
+		return;
+	}
+	if (mode == 2) {												// immediate
+		operand = eaimm();
+		switch (opcode >> 5) {
+		case 0: case 1:												// ANC
+			mRegA &= operand;
+			setNZ(mRegA);
+			setC(getN());
+			break;
+		case 2:														// ALR
+			mRegA &= operand;
+			setC(mRegA & 1);
+			mRegA >>= 1;
+			setNZ(mRegA);
+			break;
+		case 3:														// ARR
+			mRegA &= operand;
+			mRegA = (mRegA >> 1) | (getC() ? 0x80 : 0);
+			setNZ(mRegA);
+			setC(mRegA & 0x40);
+			setV(((mRegA >> 6) ^ (mRegA >> 5)) & 1);
+			break;
+		case 4:														// XAA
+			mRegA = mRegX & operand;
+			setNZ(mRegA);
+			break;
+		case 5:														// LAX #imm
+			mRegA = mRegX = operand;
+			setNZ(mRegA);
+			break;
+		case 6: {													// AXS
+			const word result = (mRegA & mRegX) - operand;
+			setC((result & 0x100) == 0);
+			mRegX = (byte)result;
+			setNZ(mRegX);
+			break;
+		}
+		case 7:														// SBC #imm
+			sbc(operand);
+			break;
+		}
+		accCycles(2);
+		return;
+	}
+	const bool yIndexed = opcode == 0x97 || opcode == 0xB7 || opcode == 0x9F || opcode == 0xBF;
+	int cycles = 0;
+	switch (mode) {
+	case 0: addr = eazpxind(); cycles = 8; break;
+	case 1: addr = eazp(); cycles = 5; break;
+	case 3: addr = eaabs(); cycles = 6; break;
+	case 4: addr = eazpindy(); cycles = 8; break;
+	case 5: addr = yIndexed ? eazpy() : eazpx(); cycles = 6; break;
+	case 6: addr = eaabsy(); cycles = 7; break;
+	default: addr = yIndexed ? eaabsy() : eaabsx(); cycles = 7; break;
+	}
+	switch (opcode >> 5) {
+	case 4:															// SAX (and SHA, SHX, TAS)
+		writeByte(addr, mRegA & mRegX);
+		accCycles(cycles - 2);
+		return;
+	case 5:															// LAX
+		mRegA = mRegX = readByte(addr);
+		setNZ(mRegA);
+		accCycles(cycles - 2);
+		return;
+	}
+	operand = readByte(addr);
+	switch (opcode >> 5) {
+	case 0:															// SLO: ASL, ORA
+		setC(operand & 0x80);
+		operand <<= 1;
+		writeByte(addr, operand);
+		mRegA |= operand;
+		setNZ(mRegA);
+		break;
+	case 1: {														// RLA: ROL, AND
+		const bool carry = getC();
+		setC(operand & 0x80);
+		operand = (operand << 1) | (carry ? 1 : 0);
+		writeByte(addr, operand);
+		mRegA &= operand;
+		setNZ(mRegA);
+		break;
+	}
+	case 2:															// SRE: LSR, EOR
+		setC(operand & 1);
+		operand >>= 1;
+		writeByte(addr, operand);
+		mRegA ^= operand;
+		setNZ(mRegA);
+		break;
+	case 3: {														// RRA: ROR, ADC
+		const bool carry = getC();
+		setC(operand & 1);
+		operand = (operand >> 1) | (carry ? 0x80 : 0);
+		writeByte(addr, operand);
+		adc(operand);
+		break;
+	}
+	case 6: {														// DCP: DEC, CMP
+		operand--;
+		writeByte(addr, operand);
+		const word result = mRegA - operand;
+		setC((result & 0x100) == 0);
+		setNZ((byte)result);
+		break;
+	}
+	case 7:															// ISC: INC, SBC
+		operand++;
+		writeByte(addr, operand);
+		sbc(operand);
+		break;
+	}
+	accCycles(cycles);
+}

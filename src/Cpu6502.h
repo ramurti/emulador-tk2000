@@ -48,6 +48,9 @@ public:
 	double getClockRate() const;
 	void executeOpcode();
 private:
+	void executeUndocumented(const byte opcode);
+	void adc(const byte operand);
+	void sbc(const byte operand);
 	CBus& mBus;
 	unsigned long mClock{ CPU_CLOCK };
 	bool mFullSpeed{ false };

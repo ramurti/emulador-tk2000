@@ -25,6 +25,7 @@
 #include "Audio.h"
 #include "Keyboard.h"
 #include "Tape.h"
+#include "Disk.h"
 #include "WindowSDL.h"
 #include "Observer.h"
 #include "AudioSDL.h"
@@ -38,6 +39,7 @@ public:
 	void notify(SDL_KeyboardEvent&) override;
 	// Native
 	bool setTapeFile(const char *filename);
+	bool setDiskFile(const char *filename);
 	bool loop();
 	void setCpuPause(bool pause);
 private:
@@ -49,6 +51,7 @@ private:
 	CAudio mAudio{ mBus, mCpu };
 	CKeyboard mKeyboard{ mBus };
 	CTape mTape{ mBus, mCpu };
+	CDisk mDisk{ mBus, mRom };
 	CWindowSDL mWindow{ mVideo };
 	CAudioSDL mAudioSDL{ mAudio };
 	CMenu* mMainMenu = nullptr;

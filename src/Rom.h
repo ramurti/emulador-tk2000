@@ -21,7 +21,8 @@
 #include "Bus.h"
 
 // ROM at $C100-$FFFF. On the 64K TK2000 II, RAM under the ROM is selected by $C05B and the
-// ROM again by $C05A; writes to $C100-$FFFF always go to the RAM.
+// ROM again by $C05A; writes to $C100-$FFFF always go to the RAM. A cartridge's ROM (the disk
+// interface's, setSlotRom) is read at $C100-$C1FF instead of the ROM or the RAM there.
 class CRom final : public CDevice {
 public:
 	CRom(CBus& bus, byte* ramPtr);
@@ -29,7 +30,10 @@ public:
 	void write(const word addr, const byte data, const uint64_t cycles) override;
 	void update(const uint64_t cycles) override {}
 	void reset() override;
+	// Native
+	void setSlotRom(const byte* slotRom) noexcept { mSlotRom = slotRom; }
 private:
 	byte* mRamPtr = nullptr;
 	bool mRamSelected{ false };
+	const byte* mSlotRom = nullptr;		// 256 bytes at $C100-$C1FF, or none
 };

@@ -37,9 +37,13 @@ int main(int argc, char* argv[]) {
 	auto theMachine = std::make_unique<CMachine>();
 
 	if (argc == 2) {
-		if (!theMachine->setTapeFile(argv[1])) {
+		// A disk image (.dsk, .do, .po, .nib) or a tape (.ct2)
+		std::string ext = std::filesystem::path(argv[1]).extension().string();
+		std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+		const bool disk = ext == ".dsk" || ext == ".do" || ext == ".po" || ext == ".nib";
+		if (!(disk ? theMachine->setDiskFile(argv[1]) : theMachine->setTapeFile(argv[1]))) {
 			char temp[200];
-			sprintf(temp, "Error inserting %s tape file\n", argv[1]);
+			sprintf(temp, "Error inserting %s %s file\n", argv[1], disk ? "disk" : "tape");
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, "ERROR", temp, nullptr);
 		}
 	}

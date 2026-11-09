@@ -26,6 +26,7 @@ enum class EDevices {
 	TAPE,
 	VIDEO,
 	AUDIO,
+	DISK,
 };
 
 /* Constants */

@@ -1061,6 +1061,9 @@ byte CRom::read(word addr, const uint64_t cycles) {
 		mRamSelected = addr == 0xC05B;
 		return 0xFF;
 	}
+	if (mSlotRom && addr < 0xC200) {
+		return mSlotRom[addr & 0xFF];
+	}
 	return mRamSelected ? mRamPtr[addr] : romImage[addr & 0x3FFF];
 }
 

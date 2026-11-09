@@ -22,6 +22,7 @@ add_executable (tk2000 WIN32
   AudioSDL.cpp AudioSDL.h
   Bus.cpp Bus.h
   Cpu6502.cpp Cpu6502.h
+  Disk.cpp Disk.h
   Keyboard.cpp Keyboard.h
   Machine.cpp Machine.h
   Menu.cpp Menu.h

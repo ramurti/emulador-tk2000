@@ -20,7 +20,7 @@
 
 /* Constants */
 
-TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file" };
+TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file", "Insert disk", "Eject disk" };
 TMenuLst cpuSpeedLst{ "1 MHz", "2 MHz", "Full speed" };
 TMenuLst filesLst{ "." };
 TMenuLst msgLst{ "OK" };
@@ -65,7 +65,8 @@ void CMachine::fillFilesLst() {
 			} else {
 				std::string ext = filename.extension().string();
 				std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-				if (ext == mFilesExt)
+				const bool disk = mFilesExt == ".dsk" && (ext == ".do" || ext == ".po" || ext == ".nib");
+				if (ext == mFilesExt || disk)
 					files.emplace_back(filename.string());
 			}
 		}
@@ -190,6 +191,11 @@ bool CMachine::setTapeFile(const char *filename) {
 }
 
 /*************************************************************************************************/
+bool CMachine::setDiskFile(const char *filename) {
+	return mDisk.insert(filename);
+}
+
+/*************************************************************************************************/
 bool CMachine::loop() {
 
 	//Main loop flag
@@ -288,6 +294,16 @@ bool CMachine::loop() {
 					fillFilesLst();
 					menu = mFilesMenu;
 					break;
+
+				case 9:								// Insert disk (.dsk, .do, .po, .nib)
+					mFilesExt = ".dsk";
+					fillFilesLst();
+					menu = mFilesMenu;
+					break;
+
+				case 10:							// Eject disk
+					mDisk.eject();
+					break;
 				}
 			} else if (mWindow.getMenu() == mCpuMenu) {
 				switch (menuSel) {
@@ -334,6 +350,8 @@ bool CMachine::loop() {
 					menu = mFilesMenu;
 				} else if (mFilesExt == ".bas") {
 					typeBasFile(cur);				// Type BASIC listing
+				} else if (mFilesExt == ".dsk") {
+					mDisk.insert(cur.c_str());		// Disk image
 				} else {
 					mTape.insertCt2(cur.c_str());	// Load file
 				}
