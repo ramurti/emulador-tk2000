@@ -95,7 +95,7 @@ void CDisk::reset() {
 // A/B the drive, C/D Q6 off/on, E/F Q7 off/on. Reading C (Q6 off, Q7 off) gives the next
 // nibble under the head; with Q7 on (write mode) an access to C writes the latch (loaded by
 // writing D or F) on the track; reading E with Q6 on senses the write protection (bit 7).
-// The disk turns as fast as the program reads it: a nibble per access.
+// The disk turns as fast as the program reads it: a nibble per access, with the motor on.
 byte CDisk::access(const word addr, const bool isWrite, const byte data) {
 	const int sw = addr & 0x0F;
 	if (sw < 8) {
@@ -141,7 +141,7 @@ byte CDisk::access(const word addr, const bool isWrite, const byte data) {
 	if (isWrite && mQ7 && (sw == 0xD || sw == 0xF)) {
 		mLatch = data;
 	}
-	if (mTracks.empty()) {
+	if (mTracks.empty() || !mMotorOn) {			// the disk only turns with the motor on
 		return 0;
 	}
 	auto& track = mTracks[mHalfTrack / 2];
