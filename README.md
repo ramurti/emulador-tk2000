@@ -2,7 +2,7 @@
 
 **About this repository**
 
-The TK2000 emulator was created by **Fabio Belavenuto** (FBLabs), originally published at https://github.com/fbelavenuto/tk2000. This repository preserves his full history and continues the project, adding macOS support, a resizable window with a TK2000 monitor frame, a menu option to type BASIC files, 64K memory (RAM under the ROM), faster tape loading, recording the inserted tape as a WAV for a real TK2000, a macOS installer and the disk drive.
+The TK2000 emulator was created by **Fabio Belavenuto** (FBLabs), originally published at https://github.com/fbelavenuto/tk2000. This repository preserves his full history and continues the project, adding macOS support, a resizable window with a TK2000 monitor frame, a menu option to type BASIC files, 64K memory (RAM under the ROM), faster tape loading, recording the inserted tape as a WAV for a real TK2000, recording what programs save on tape, a macOS installer and the disk drive.
 
 *In memory of Fabio Belavenuto.*
 
@@ -19,6 +19,8 @@ Download the latest release and unzip it to a folder, no installation required. 
 Run the binary. To call up the menu, press F2 on the keyboard and use the up and down arrow keys to navigate. Use the ENTER key to accept the selected menu.
 
 "Record tape (WAV)" saves the inserted tape (all its files, exactly the same blocks) as a WAV next to the `.ct2`, ready to load on a real TK2000 with `LOADT`. An existing WAV is never overwritten: the new one gets a `-2`, `-3`... suffix.
+
+What a program saves on tape (`SAVET` in BASIC, or any program using the ROM's tape routines) is recorded: the blocks are appended to `recorded.ct2`, next to the inserted tape (or in the current directory if there is none). Insert `recorded.ct2` to load them back with `LOADT`.
 
 "Insert disk" puts a disk image (`.dsk`, `.do`, `.po` or `.nib`, Apple II formats) in the drive of the TK2000 disk interface (the Microdigital cartridge, a copy of the Apple Disk II controller: registers at `$C090-$C09F`, boot ROM at `$C100-$C1FF` while a disk is inserted). Boot it with `CALL 49408` (`$C100`). What the TK2000 writes on the disk is saved in the image file (a read-only file is a write-protected disk). "Eject disk" removes it. A disk image can also be given on the command line instead of a tape. TKDOS 3.3 (the TK2000's DOS, from the TK2000 emulator at https://github.com/apple-II/tk2000-emulator, `Outros/TKDOS2000.dsk`) boots and reads and writes files.
 
@@ -76,6 +78,8 @@ Baixe o último release e descompacte em alguma pasta, não é necessário insta
 Execute o binário. Para chamar o menu aperte F2 no teclado e use as setas direcionais para cima e para baixo para navegar. Utilize a tecla ENTER para aceitar o menu selecionado.
 
 "Record tape (WAV)" grava a fita inserida (todos os arquivos, exatamente os mesmos blocos) num WAV ao lado do `.ct2`, pronto para carregar num TK2000 real com `LOADT`. Um WAV existente nunca é sobrescrito: o novo ganha o sufixo `-2`, `-3`...
+
+O que um programa grava em fita (`SAVET` no BASIC, ou qualquer programa que use as rotinas de fita da ROM) é gravado: os blocos são acrescentados a `recorded.ct2`, ao lado da fita inserida (ou no diretório atual, se não houver fita). Insira `recorded.ct2` para carregá-los de volta com `LOADT`.
 
 "Insert disk" coloca uma imagem de disco (`.dsk`, `.do`, `.po` ou `.nib`, formatos do Apple II) no drive da interface de disco do TK2000 (o cartucho da Microdigital, cópia da controladora Disk II da Apple: registradores em `$C090-$C09F`, ROM de boot em `$C100-$C1FF` enquanto há um disco inserido). Dê o boot com `CALL 49408` (`$C100`). O que o TK2000 grava no disco é salvo no arquivo da imagem (um arquivo somente leitura é um disco protegido). "Eject disk" retira o disco. Uma imagem de disco também pode ser passada na linha de comando no lugar de uma fita. O TKDOS 3.3 (o DOS do TK2000, do emulador em https://github.com/apple-II/tk2000-emulator, `Outros/TKDOS2000.dsk`) dá boot, lê e grava arquivos.
 

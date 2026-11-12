@@ -25,7 +25,7 @@ public:
 	CTape(CBus& bus, CCpu6502& cpu);
 	// CDevice
 	byte read(const word addr, const uint64_t cycles) override;
-	void write(const word addr, const byte data, const uint64_t cycles) override {};
+	void write(const word addr, const byte data, const uint64_t cycles) override;
 	void update(const uint64_t cycles) override;
 	void reset() override;
 	// Native
@@ -35,7 +35,16 @@ public:
 	bool getPlayState() const noexcept;
 	bool insertCt2(const char *fileName);
 	bool saveWav(std::string& wavName) const;
+	void setRecordFile(const std::string& fileName) { mRecName = fileName; mRecSet = true; }
+	const std::string& getRecordFile() const noexcept { return mRecName; }
+	unsigned getRecordedBlocks() const noexcept { return mRecBlocks; }
 private:
+	void recordToggle();
+	void finishRecording();
+	std::vector<uint64_t> mRecEdges;	// Cycles of the cassette output toggles being recorded
+	std::string mRecName{ "recorded.ct2" };	// Recordings are appended to this tape (next to the
+	bool mRecSet{ false };				// inserted one, unless set)
+	unsigned mRecBlocks{ 0 };			// Blocks recorded so far
 	using TBlocks = std::vector<std::vector<byte>>;
 	std::vector<TBlocks> mFiles;		// The inserted tape's files (CA) and their data blocks (DA)
 	std::string mFileName;				// The inserted tape (absolute path)

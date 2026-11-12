@@ -49,6 +49,10 @@ CTape::CTape(CBus& bus, CCpu6502& cpu) :
 
 /*************************************************************************************************/
 byte CTape::read(const word addr, const uint64_t cycles) {
+	if ((addr & 0xF0) == 0x20) {
+		recordToggle();
+		return 0x00;
+	}
 	if ((addr & 0xF0) == 0x10) {
 		if (!mPlay) {
 			return 0x00;
@@ -89,11 +93,118 @@ byte CTape::read(const word addr, const uint64_t cycles) {
 }
 
 /*************************************************************************************************/
+void CTape::write(const word addr, const byte data, const uint64_t cycles) {
+	if ((addr & 0xF0) == 0x20) {
+		recordToggle();
+	}
+}
+
+/*************************************************************************************************/
+// Cassette output ($C020 toggles it, as SAVET does): the edges are kept and, 0.5 s after the
+// last one, decoded into CT2 blocks appended to the record tape. Full speed meanwhile.
+void CTape::recordToggle() {
+	const uint64_t now = mCpu.getCumulativeCycles();
+	if (!mRecEdges.empty() && now - mRecEdges.back() > LOAD_IDLE_CYCLES) {
+		finishRecording();
+	}
+	mRecEdges.push_back(now);
+	mCpu.setFullSpeed(true);
+}
+
+/*************************************************************************************************/
 void CTape::update(const uint64_t cycles) {
+	if (!mRecEdges.empty() && cycles - mRecEdges.back() > LOAD_IDLE_CYCLES) {
+		finishRecording();
+		if (!mPlay) {
+			mCpu.setFullSpeed(false);
+		}
+	}
 	// Back to normal speed when the program stops loading (e.g. a game started before the tape end)
 	if (mPlay && mCpu.getFullSpeed() && cycles - mLastLoadCycle > LOAD_IDLE_CYCLES) {
 		mCpu.setFullSpeed(false);
 	}
+}
+
+/*************************************************************************************************/
+// The ROM writes, per file, a pilot (~500 µs half periods), then per block a lead-in (~670 µs),
+// two short sync halves and the bytes (MSB first, a bit = two equal halves: ~250 µs = 0,
+// ~500 µs = 1). The block length comes from its contents: name (6), number of blocks, block
+// index, then the header's start and end (block 0) or up to 256 bytes of data, and a checksum.
+void CTape::finishRecording() {
+	std::vector<uint32_t> h;
+	for (size_t i = 1; i < mRecEdges.size(); i++) {
+		h.push_back((uint32_t)(mRecEdges[i] - mRecEdges[i - 1]));
+	}
+	mRecEdges.clear();
+	std::vector<std::pair<std::string, std::vector<byte>>> chunks;
+	unsigned ptr = 0, end = 0;
+	size_t i = 0;
+	while (i < h.size()) {
+		// pilot and lead-in
+		size_t pilot = 0, lead = 0;
+		while (i < h.size() && h[i] >= 400 && h[i] < 600) {
+			pilot++, i++;
+		}
+		while (i < h.size() && h[i] >= 600 && h[i] < 900) {
+			lead++, i++;
+		}
+		if (lead < 16) {
+			if (pilot == 0 && lead == 0) {
+				i++;
+			}
+			continue;
+		}
+		if (pilot > 200) {
+			chunks.push_back({ CT2_CAB_A, {} });
+		}
+		i += 2;	// the sync halves
+		std::vector<byte> block;
+		size_t len = 8;
+		while (block.size() < len && i + 16 <= h.size()) {
+			byte b = 0;
+			for (int k = 0; k < 8; k++, i += 2) {
+				b = (byte)(b << 1 | (h[i] + h[i + 1] > 750 ? 1 : 0));
+			}
+			block.push_back(b);
+			if (block.size() == 8) {
+				len = block[7] == 0 ? 8 + 4 + 1 : 8 + std::min(256u, end - ptr + 1) + 1;
+			}
+		}
+		if (block.size() < len) {
+			break;
+		}
+		if (block[7] == 0) {
+			ptr = block[8] | block[9] << 8;
+			end = block[10] | block[11] << 8;
+		} else {
+			ptr += (unsigned)len - 9;
+		}
+		chunks.push_back({ CT2_CAB_B, {} });
+		chunks.push_back({ CT2_DATA, block });
+		mRecBlocks++;
+	}
+	if (chunks.empty()) {
+		return;
+	}
+	if (!mRecSet && !mFileName.empty()) {
+		mRecName = (std::filesystem::path(mFileName).parent_path() / "recorded.ct2").string();
+	}
+	const bool isNew = !std::filesystem::exists(mRecName);
+	FILE* f = fopen(mRecName.c_str(), "ab");
+	if (!f) {
+		return;
+	}
+	if (isNew) {
+		fwrite(CT2_MAGIC, 1, 4, f);
+	}
+	for (auto& [id, data] : chunks) {
+		SCh ch;
+		memcpy(ch.ID, id.c_str(), 2);
+		ch.size = (word)data.size();
+		fwrite(&ch, 1, sizeof(ch), f);
+		fwrite(data.data(), 1, data.size(), f);
+	}
+	fclose(f);
 }
 
 /*************************************************************************************************/
