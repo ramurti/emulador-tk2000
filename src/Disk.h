@@ -50,12 +50,14 @@ private:
 	int mHalfTrack{ 0 };
 	byte mPhases{ 0 };								// Stepper phases on (bits 0-3)
 	bool mMotorOn{ false };
+	uint64_t mSpinUntil{ 0 };						// Motor off: the drive still on until then
 	bool mQ6{ false };								// Q6 on: load / sense write protect
 	bool mQ7{ false };								// Q7 on: write mode
 	byte mLatch{ 0 };
+	byte mLastRead{ 0 };							// The last value read from the data latch
 	size_t mPos{ 0 };								// Position on the track (nibbles)
 private:
-	byte access(const word addr, const bool isWrite, const byte data);
+	byte access(const word addr, const bool isWrite, const byte data, const uint64_t cycles);
 	void nibblize(int track);
 	bool denibblize(int track);
 	void flush();

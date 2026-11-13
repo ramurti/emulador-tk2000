@@ -74,17 +74,18 @@ CDisk::~CDisk() {
 
 /*************************************************************************************************/
 byte CDisk::read(const word addr, const uint64_t cycles) {
-	return access(addr, false, 0);
+	return access(addr, false, 0, cycles);
 }
 
 /*************************************************************************************************/
 void CDisk::write(const word addr, const byte data, const uint64_t cycles) {
-	access(addr, true, data);
+	access(addr, true, data, cycles);
 }
 
 /*************************************************************************************************/
 void CDisk::reset() {
 	mMotorOn = false;
+	mSpinUntil = 0;
 	mQ6 = false;
 	mQ7 = false;
 	mPhases = 0;
@@ -95,8 +96,10 @@ void CDisk::reset() {
 // A/B the drive, C/D Q6 off/on, E/F Q7 off/on. Reading C (Q6 off, Q7 off) gives the next
 // nibble under the head; with Q7 on (write mode) an access to C writes the latch (loaded by
 // writing D or F) on the track; reading E with Q6 on senses the write protection (bit 7).
-// The disk turns as fast as the program reads it: a nibble per access, with the motor on.
-byte CDisk::access(const word addr, const bool isWrite, const byte data) {
+// The disk turns as fast as the program reads it: a nibble per access, with the motor on and
+// for a second after it is turned off (the controller keeps the drive on that long: DOS checks
+// that the disk still turns, else it waits for the motor to get up to speed at each access).
+byte CDisk::access(const word addr, const bool isWrite, const byte data, const uint64_t cycles) {
 	const int sw = addr & 0x0F;
 	if (sw < 8) {
 		const int phase = sw >> 1;
@@ -119,6 +122,9 @@ byte CDisk::access(const word addr, const bool isWrite, const byte data) {
 	}
 	switch (sw) {
 	case 0x8:
+		if (mMotorOn) {
+			mSpinUntil = cycles + CPU_CLOCK;
+		}
 		mMotorOn = false;
 		flush();
 		break;
@@ -141,7 +147,7 @@ byte CDisk::access(const word addr, const bool isWrite, const byte data) {
 	if (isWrite && mQ7 && (sw == 0xD || sw == 0xF)) {
 		mLatch = data;
 	}
-	if (mTracks.empty() || !mMotorOn) {			// the disk only turns with the motor on
+	if (mTracks.empty() || (!mMotorOn && cycles >= mSpinUntil)) {	// the disk only turns with the motor on
 		return 0;
 	}
 	auto& track = mTracks[mHalfTrack / 2];
@@ -155,7 +161,14 @@ byte CDisk::access(const word addr, const bool isWrite, const byte data) {
 			mPos++;
 			return 0;
 		}
-		return track[mPos++];
+		const byte nibble = track[mPos];
+		if (nibble == mLastRead) {				// the same nibble again (self-sync $FF gaps): the
+			mLastRead = nibble & 0x7F;			// latch isn't full yet, as between two nibbles on a
+			return mLastRead;					// real drive (DOS sees the disk turning by this)
+		}
+		mLastRead = nibble;
+		mPos++;
+		return nibble;
 	}
 	if (sw == 0xE && !isWrite && mQ6) {
 		return mWriteProtected ? 0x80 : 0x00;
