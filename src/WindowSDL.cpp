@@ -182,7 +182,7 @@ CWindowSDL::CWindowSDL(CVideo& video) :
 	SDL_FreeSurface(surface);
 	// Optional frame picture; without it, only the screen is shown
 	loadFrame();
-	setFrameMode(EFrameMode::Full);
+	setFrameMode(EFrameMode::Off);
 }
 
 /*****************************************************************************/

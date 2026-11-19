@@ -58,7 +58,7 @@ private:
 	CMenu* mCpuMenu = nullptr;
 	CMenu* mFilesMenu = nullptr;
 	CMenu* mMsgMenu = nullptr;		// A message (e.g. the recorded tape's name)
-	bool mCpuPaused = true;
+	bool mCpuPaused = false;
 	std::string mFilesExt{ ".ct2" };		// Extension shown in the file menu
 	bool mTypingFile = false;				// Typing a BASIC file at full speed
 	bool mSpeedBeforeTyping = false;

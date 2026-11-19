@@ -16,7 +16,7 @@ I used the SDL2 graphics library to render the image and generate sound. For con
 
 Download the latest release and unzip it to a folder, no installation required. To use SDL2 it is necessary that some libraries (supplied) are included with the binary.
 
-Run the binary. To call up the menu, press F2 on the keyboard and use the up and down arrow keys to navigate. Use the ENTER key to accept the selected menu.
+Run the binary. To call up the menu, press F2 on the keyboard and use the up and down arrow keys to navigate. Use the ENTER key to accept the selected menu. The machine is switched on (running) when the emulator starts; "Pause" in the menu stops it.
 
 "Record tape (WAV)" saves the inserted tape (all its files, exactly the same blocks) as a WAV next to the `.ct2`, ready to load on a real TK2000 with `LOADT`. An existing WAV is never overwritten: the new one gets a `-2`, `-3`... suffix.
 
@@ -26,7 +26,9 @@ What a program saves on tape (`SAVET` in BASIC, or any program using the ROM's t
 
 "Scan lines" in the menu (or F7) turns on a light TV scan-line effect: the bottom part of each line of the picture 25% darker. It is off when the emulator starts.
 
-"Frame" in the menu (or F9) changes the picture around the screen: the TK2000 with its monitor (at start), the monitor and the TK2000 label only (without the keyboard), or none.
+"Frame" in the menu (or F9) changes the picture around the screen: the TK2000 with its monitor, the monitor and the TK2000 label only (without the keyboard), or none (at start).
+
+"Display" in the menu (or F10) cycles colour TV, white monochrome monitor and green monochrome monitor. On a monochrome monitor the text, which the TK2000 draws on the graphics screen, has no colour fringes, whatever the program selects with the colour switch ($C050/$C051).
 
 # Development
 
@@ -79,7 +81,7 @@ Usei a biblioteca gráfica SDL2 para fazer a renderização da imagem e geraçã
 
 Baixe o último release e descompacte em alguma pasta, não é necessário instalação. Por usar o SDL2 é necessário que algumas bibliotecas (fornecido) estejam junto ao binário.
 
-Execute o binário. Para chamar o menu aperte F2 no teclado e use as setas direcionais para cima e para baixo para navegar. Utilize a tecla ENTER para aceitar o menu selecionado.
+Execute o binário. Para chamar o menu aperte F2 no teclado e use as setas direcionais para cima e para baixo para navegar. Utilize a tecla ENTER para aceitar o menu selecionado. A máquina já começa ligada (rodando) ao abrir o emulador; "Pause" no menu a para.
 
 "Record tape (WAV)" grava a fita inserida (todos os arquivos, exatamente os mesmos blocos) num WAV ao lado do `.ct2`, pronto para carregar num TK2000 real com `LOADT`. Um WAV existente nunca é sobrescrito: o novo ganha o sufixo `-2`, `-3`...
 
@@ -89,7 +91,9 @@ O que um programa grava em fita (`SAVET` no BASIC, ou qualquer programa que use 
 
 "Scan lines" no menu (ou F7) liga um efeito leve de linhas de varredura de TV: a parte de baixo de cada linha da imagem fica 25% mais escura. Começa desligado ao abrir o emulador.
 
-"Frame" no menu (ou F9) muda a imagem em volta da tela: o TK2000 com o monitor (ao abrir), só o monitor e a faixa TK2000 (sem o teclado), ou nenhuma.
+"Frame" no menu (ou F9) muda a imagem em volta da tela: o TK2000 com o monitor, só o monitor e a faixa TK2000 (sem o teclado), ou nenhuma (ao abrir).
+
+"Display" no menu (ou F10) alterna TV em cores, monitor monocromático branco e monitor monocromático verde. No monitor monocromático o texto, que o TK2000 desenha na tela gráfica, fica sem as franjas de cor, qualquer que seja a cor escolhida pelo programa ($C050/$C051).
 
 # Desenvolvimento
 

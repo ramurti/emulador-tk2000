@@ -20,6 +20,10 @@
 #include "Device.h"
 #include "Bus.h"
 
+// What the screen shows: the colour TV picture, or a monochrome monitor (white or green
+// phosphor) whatever the program selects with the colour switch ($C050/$C051)
+enum class EDisplayMode { Color, MonoWhite, MonoGreen };
+
 struct SRGB {
 	byte red;
 	byte green;
@@ -35,10 +39,14 @@ public:
 	void reset() override;
 	//
 	SRGB* getFrameBuffer();
+	void setDisplayMode(EDisplayMode mode) noexcept { mDisplayMode = mode; }
+	EDisplayMode getDisplayMode() const noexcept { return mDisplayMode; }
+	void nextDisplayMode() noexcept;
 private:
 	byte* mRamPtr = nullptr;
 	bool mVideoMono{ false };
 	bool mSecondPage{ false };
+	EDisplayMode mDisplayMode{ EDisplayMode::Color };
 	SRGB mFrameBuffer[VIDEOWIDTH * VIDEOHEIGHT]{ 0 };
 	void drawMono();
 	void drawColor();

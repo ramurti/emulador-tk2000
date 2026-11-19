@@ -23,6 +23,8 @@ static bool colorMod[VIDEOWIDTH / 7][VIDEOHEIGHT];
 /*****************************************************************************/
 void CVideo::drawMono() {
 	word memAddr = (mSecondPage ? 0xA000 : 0x2000);
+	// Lit pixel colour: green phosphor monitor, or white
+	const SRGB on = mDisplayMode == EDisplayMode::MonoGreen ? SRGB{ 51, 255, 102 } : SRGB{ 255, 255, 255 };
 	byte *pnt;
 	for (int y = 0; y < VIDEOHEIGHT; y++) {
 		int offset = ((y & 7) << 10) + ((y & 0x38) << 4) + (y >> 6) * 40;
@@ -32,9 +34,7 @@ void CVideo::drawMono() {
 			for (int b = 0; b < 7; b++) {
 				const int index = y * VIDEOWIDTH + x + b;
 				if (v & (1 << b)) {
-					mFrameBuffer[index].red = 255;
-					mFrameBuffer[index].green = 255;
-					mFrameBuffer[index].blue = 255;
+					mFrameBuffer[index] = on;
 				} else {
 					mFrameBuffer[index].red = 0;
 					mFrameBuffer[index].green = 0;
@@ -156,6 +156,16 @@ void CVideo::reset() {
 /*****************************************************************************/
 SRGB* CVideo::getFrameBuffer() {
 	memset(mFrameBuffer, 0, sizeof(mFrameBuffer));
-	mVideoMono ? drawMono() : drawColor();
+	(mVideoMono || mDisplayMode != EDisplayMode::Color) ? drawMono() : drawColor();
 	return mFrameBuffer;
+}
+
+/*****************************************************************************/
+// Colour TV, white monochrome monitor, green monochrome monitor
+void CVideo::nextDisplayMode() noexcept {
+	switch (mDisplayMode) {
+	case EDisplayMode::Color:		mDisplayMode = EDisplayMode::MonoWhite; break;
+	case EDisplayMode::MonoWhite:	mDisplayMode = EDisplayMode::MonoGreen; break;
+	case EDisplayMode::MonoGreen:	mDisplayMode = EDisplayMode::Color; break;
+	}
 }

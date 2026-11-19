@@ -20,7 +20,7 @@
 
 /* Constants */
 
-TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file", "Insert disk", "Eject disk", "Scan lines (F7)", "Frame (F9)" };
+TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file", "Insert disk", "Eject disk", "Scan lines (F7)", "Frame (F9)", "Display (F10)" };
 TMenuLst cpuSpeedLst{ "1 MHz", "2 MHz", "Full speed" };
 TMenuLst filesLst{ "." };
 TMenuLst msgLst{ "OK" };
@@ -165,6 +165,8 @@ void CMachine::notify(SDL_KeyboardEvent& e) {
 				mMainMenu->getMenuLst()[11] = mWindow.getScanline() ? "Scan lines: on (F7)" : "Scan lines: off (F7)";
 				mMainMenu->getMenuLst()[12] = mWindow.getFrameMode() == EFrameMode::Full ? "Frame: TK2000 and monitor (F9)" :
 					mWindow.getFrameMode() == EFrameMode::Monitor ? "Frame: monitor (F9)" : "Frame: off (F9)";
+				mMainMenu->getMenuLst()[13] = mVideo.getDisplayMode() == EDisplayMode::Color ? "Display: color TV (F10)" :
+					mVideo.getDisplayMode() == EDisplayMode::MonoWhite ? "Display: mono white (F10)" : "Display: mono green (F10)";
 				mWindow.setMenu(mMainMenu);
 			}
 			processed = true;
@@ -178,6 +180,11 @@ void CMachine::notify(SDL_KeyboardEvent& e) {
 
 		case SDLK_F6:
 			mTape.play();
+			processed = true;
+			break;
+
+		case SDLK_F10:
+			mVideo.nextDisplayMode();
 			processed = true;
 			break;
 		}
@@ -314,6 +321,10 @@ bool CMachine::loop() {
 
 				case 12:							// Frame: TK2000 and monitor, monitor only, off
 					mWindow.nextFrameMode();
+					break;
+
+				case 13:							// Display: colour TV, mono white, mono green
+					mVideo.nextDisplayMode();
 					break;
 				}
 			} else if (mWindow.getMenu() == mCpuMenu) {
