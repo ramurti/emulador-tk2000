@@ -76,7 +76,7 @@ void CMachine::fillFilesLst() {
 #ifdef _WIN32
 	if (!curpath.empty())
 #else
-	if (curpath.length() > 3)
+	if (curpath != "/")
 #endif
 	{
 		dirs.insert(dirs.begin(), "[..]");
