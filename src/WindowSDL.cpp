@@ -26,12 +26,12 @@ static const char* FRAME_FILE = "tk2000-frame.png";
 
 
 /*****************************************************************************/
-void CWindowSDL::setScanline(bool val) noexcept {
-	mScanLines = val;
+void CWindowSDL::nextScanline() noexcept {
+	mScanLines = mScanLines == 0 ? 25 : mScanLines == 25 ? 35 : 0;
 }
 
 /*****************************************************************************/
-bool CWindowSDL::getScanline() const noexcept {
+int CWindowSDL::getScanline() const noexcept {
 	return mScanLines;
 }
 
@@ -211,9 +211,10 @@ void CWindowSDL::render(bool cpuState, bool tapeState) {
 		memcpy(ptr, fb, pitch);
 		ptr += pitch;
 		if (mScanLines) {
-			// Light TV scan lines: the second row of each line 25% darker
+			// Light TV scan lines: the second row of each line 25% or 35% darker
+			const int keep = 100 - mScanLines;
 			for (int j = 0; j < pitch; j++) {
-				ptr[j] = (char)((byte)fb[j] * 75 / 100);
+				ptr[j] = (char)((byte)fb[j] * keep / 100);
 			}
 		} else {
 			memcpy(ptr, fb, pitch);
@@ -319,7 +320,7 @@ bool CWindowSDL::loop() {
 				break;
 
 			case SDLK_F7:
-				setScanline(!mScanLines);
+				nextScanline();
 				processed = true;
 				break;
 

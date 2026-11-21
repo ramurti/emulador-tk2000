@@ -12,6 +12,12 @@ This emulator was created to test my learning in C++. The required level is C++1
 
 I used the SDL2 graphics library to render the image and generate sound. For configuration I used a simple menu system rendering texts with a rasterized font on top of the TK2000 video itself.
 
+# Download (macOS)
+
+The macOS installer is on the [Releases page](https://github.com/ramurti/emulador-tk2000/releases/latest): download `TK2000-<version>.dmg`, open it and drag **TK2000** to **Applications**. It runs on Macs with Apple chips (M1 or newer) and macOS 15 or later.
+
+The app is not signed with an Apple developer certificate, so the first time macOS refuses to open it: right-click the app and choose **Open**, or go to **System Settings > Privacy & Security** and click **Open Anyway**. After that it opens normally.
+
 # Usage
 
 Download the latest release and unzip it to a folder, no installation required. To use SDL2 it is necessary that some libraries (supplied) are included with the binary.
@@ -24,7 +30,7 @@ What a program saves on tape (`SAVET` in BASIC, or any program using the ROM's t
 
 "Insert disk" puts a disk image (`.dsk`, `.do`, `.po` or `.nib`, Apple II formats) in the drive of the TK2000 disk interface (the Microdigital cartridge, a copy of the Apple Disk II controller: registers at `$C090-$C09F`, boot ROM at `$C100-$C1FF` while a disk is inserted). Boot it with `CALL 49408` (`$C100`). What the TK2000 writes on the disk is saved in the image file (a read-only file is a write-protected disk). "Eject disk" removes it. A disk image can also be given on the command line instead of a tape. TKDOS 3.3 (the TK2000's DOS, from the TK2000 emulator at https://github.com/apple-II/tk2000-emulator, `Outros/TKDOS2000.dsk`) boots and reads and writes files.
 
-"Scan lines" in the menu (or F7) turns on a light TV scan-line effect: the bottom part of each line of the picture 25% darker. It is off when the emulator starts.
+"Scan lines" in the menu (or F7) cycles a light TV scan-line effect: off, the bottom part of each line of the picture 25% darker, then 35% darker, then off again. It is off when the emulator starts.
 
 "Frame" in the menu (or F9) changes the picture around the screen: the TK2000 with its monitor (at start), the monitor and the TK2000 label only (without the keyboard), or none.
 
@@ -56,7 +62,7 @@ Run it from the repository root so the tape browser starts in the project direct
 To create a disk image (`dist/TK2000-<version>.dmg`) with the app and SDL bundled, to share with other people:
 
 ```sh
-packaging/macos/make-dmg.sh 1.0
+packaging/macos/make-dmg.sh 1.1
 ```
 
 The app runs on the same architecture and minimum macOS version as the Homebrew SDL libraries used to build it.
@@ -75,6 +81,12 @@ Este emulador foi criado para testar meu aprendizado na linha C++. O nível requ
 
 Usei a biblioteca gráfica SDL2 para fazer a renderização da imagem e geração de som. Para a configuração utilizei um sistema de menu simples renderizando textos com uma fonte rasterizada em cima do próprio vídeo do TK2000.
 
+# Download (macOS)
+
+O instalador para macOS está na [página de Releases](https://github.com/ramurti/emulador-tk2000/releases/latest): baixe `TK2000-<versão>.dmg`, abra e arraste o **TK2000** para **Aplicativos**. Roda em Macs com chip da Apple (M1 ou mais novo) e macOS 15 ou posterior.
+
+O app não é assinado com um certificado de desenvolvedor da Apple, então na primeira vez o macOS se recusa a abri-lo: clique com o botão direito no app e escolha **Abrir**, ou vá em **Ajustes do Sistema > Privacidade e Segurança** e clique em **Abrir Mesmo Assim**. Depois disso ele abre normalmente.
+
 # Uso
 
 Baixe o último release e descompacte em alguma pasta, não é necessário instalação. Por usar o SDL2 é necessário que algumas bibliotecas (fornecido) estejam junto ao binário.
@@ -87,7 +99,7 @@ O que um programa grava em fita (`SAVET` no BASIC, ou qualquer programa que use 
 
 "Insert disk" coloca uma imagem de disco (`.dsk`, `.do`, `.po` ou `.nib`, formatos do Apple II) no drive da interface de disco do TK2000 (o cartucho da Microdigital, cópia da controladora Disk II da Apple: registradores em `$C090-$C09F`, ROM de boot em `$C100-$C1FF` enquanto há um disco inserido). Dê o boot com `CALL 49408` (`$C100`). O que o TK2000 grava no disco é salvo no arquivo da imagem (um arquivo somente leitura é um disco protegido). "Eject disk" retira o disco. Uma imagem de disco também pode ser passada na linha de comando no lugar de uma fita. O TKDOS 3.3 (o DOS do TK2000, do emulador em https://github.com/apple-II/tk2000-emulator, `Outros/TKDOS2000.dsk`) dá boot, lê e grava arquivos.
 
-"Scan lines" no menu (ou F7) liga um efeito leve de linhas de varredura de TV: a parte de baixo de cada linha da imagem fica 25% mais escura. Começa desligado ao abrir o emulador.
+"Scan lines" no menu (ou F7) alterna um efeito leve de linhas de varredura de TV: desligado, a parte de baixo de cada linha da imagem 25% mais escura, depois 35% mais escura, depois desligado de novo. Começa desligado ao abrir o emulador.
 
 "Frame" no menu (ou F9) muda a imagem em volta da tela: o TK2000 com o monitor (ao abrir), só o monitor e a faixa TK2000 (sem o teclado), ou nenhuma.
 
@@ -114,7 +126,7 @@ cmake --build build
 Para gerar uma imagem de disco (`dist/TK2000-<versão>.dmg`) com o app e o SDL embutidos, para enviar a outras pessoas:
 
 ```sh
-packaging/macos/make-dmg.sh 1.0
+packaging/macos/make-dmg.sh 1.1
 ```
 
 O app roda na mesma arquitetura e versão mínima do macOS das bibliotecas SDL do Homebrew usadas na compilação.

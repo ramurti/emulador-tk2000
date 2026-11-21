@@ -33,7 +33,7 @@ private:
 	SDL_Window* mWindow{};
 	SDL_Renderer* mRenderer{};
 	SDL_Texture* mScreen{};
-	bool mScanLines{ false };
+	int mScanLines{ 0 };				// scan lines: how much darker (%) the second row of each line is (0: off)
 	CVideo& mVideo;
 	bool mFullScreen{ false };
 	CMenu* mMenu = nullptr;
@@ -56,8 +56,8 @@ public:
 	~CWindowSDL();
 	// Native
 	void render(bool cpuState, bool tapeState);
-	void setScanline(bool val) noexcept;
-	bool getScanline() const noexcept;
+	void nextScanline() noexcept;		// off, 25%, 35%, off again
+	int getScanline() const noexcept;
 	void setFrameMode(EFrameMode mode) noexcept;
 	EFrameMode getFrameMode() const noexcept;
 	void nextFrameMode() noexcept;

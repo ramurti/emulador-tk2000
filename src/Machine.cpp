@@ -162,7 +162,8 @@ void CMachine::notify(SDL_KeyboardEvent& e) {
 				mWindow.setMenu(nullptr);
 			} else {
 				mMainMenu->getMenuLst()[0] = mCpuPaused ? "Start" : "Pause";
-				mMainMenu->getMenuLst()[11] = mWindow.getScanline() ? "Scan lines: on (F7)" : "Scan lines: off (F7)";
+				mMainMenu->getMenuLst()[11] = mWindow.getScanline() == 0 ? "Scan lines: off (F7)" :
+					mWindow.getScanline() == 25 ? "Scan lines: 25% (F7)" : "Scan lines: 35% (F7)";
 				mMainMenu->getMenuLst()[12] = mWindow.getFrameMode() == EFrameMode::Full ? "Frame: TK2000 and monitor (F9)" :
 					mWindow.getFrameMode() == EFrameMode::Monitor ? "Frame: monitor (F9)" : "Frame: off (F9)";
 				mWindow.setMenu(mMainMenu);
@@ -308,8 +309,8 @@ bool CMachine::loop() {
 					mDisk.eject();
 					break;
 
-				case 11:							// Scan lines: light TV effect, off by default
-					mWindow.setScanline(!mWindow.getScanline());
+				case 11:							// Scan lines: off (default), 25%, 35% darker
+					mWindow.nextScanline();
 					break;
 
 				case 12:							// Frame: TK2000 and monitor, monitor only, off
