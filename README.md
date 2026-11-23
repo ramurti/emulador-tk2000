@@ -18,6 +18,17 @@ The macOS installer is on the [Releases page](https://github.com/ramurti/emulado
 
 The app is not signed with an Apple developer certificate, so the first time macOS refuses to open it: right-click the app and choose **Open**, or go to **System Settings > Privacy & Security** and click **Open Anyway**. After that it opens normally.
 
+# Download (Linux)
+
+The Linux version is also on the [Releases page](https://github.com/ramurti/emulador-tk2000/releases/latest): download `TK2000-<version>-x86_64.AppImage`. It is a single file with SDL included, so there is nothing to install. Make it executable and run it:
+
+```sh
+chmod +x TK2000-*-x86_64.AppImage
+./TK2000-*-x86_64.AppImage
+```
+
+or, in the file manager, open **Properties > Permissions**, check **Allow executing file as program** and double-click it. It runs on 64-bit PCs with glibc 2.39 or newer (Ubuntu 24.04, Linux Mint 22, Debian 13, Fedora 40 or later). If it complains about FUSE, install `libfuse2` (`sudo apt install libfuse2t64` on Ubuntu 24.04 and Mint 22) or run it with `--appimage-extract-and-run`.
+
 # Usage
 
 Download the latest release and unzip it to a folder, no installation required. To use SDL2 it is necessary that some libraries (supplied) are included with the binary.
@@ -87,6 +98,14 @@ cmake --build build -j
 
 The frame picture (`tk2000-frame.png`) is copied next to the binary, so the emulator can also be run from any other directory.
 
+To create an AppImage (`dist/TK2000-<version>-x86_64.AppImage`) with SDL bundled, to share with other people (it also needs `python3-pil` and `curl`, and downloads [linuxdeploy](https://github.com/linuxdeploy/linuxdeploy) the first time):
+
+```sh
+packaging/linux/make-appimage.sh 1.1
+```
+
+The AppImage runs on distributions with the same or a newer glibc than the system used to build it, so build it on the oldest distribution you want to support.
+
 # Known issues
 
 There is a problem with sound generation, there may be some glitches during sound playback. This problem remains unresolved for now.
@@ -106,6 +125,17 @@ Usei a biblioteca gráfica SDL2 para fazer a renderização da imagem e geraçã
 O instalador para macOS está na [página de Releases](https://github.com/ramurti/emulador-tk2000/releases/latest): baixe `TK2000-<versão>.dmg`, abra e arraste o **TK2000** para **Aplicativos**. Roda em Macs com chip da Apple (M1 ou mais novo) e macOS 15 ou posterior.
 
 O app não é assinado com um certificado de desenvolvedor da Apple, então na primeira vez o macOS se recusa a abri-lo: clique com o botão direito no app e escolha **Abrir**, ou vá em **Ajustes do Sistema > Privacidade e Segurança** e clique em **Abrir Mesmo Assim**. Depois disso ele abre normalmente.
+
+# Download (Linux)
+
+A versão para Linux também está na [página de Releases](https://github.com/ramurti/emulador-tk2000/releases/latest): baixe `TK2000-<versão>-x86_64.AppImage`. É um único arquivo com o SDL embutido, então não há nada para instalar. Torne-o executável e execute:
+
+```sh
+chmod +x TK2000-*-x86_64.AppImage
+./TK2000-*-x86_64.AppImage
+```
+
+ou, no gerenciador de arquivos, abra **Propriedades > Permissões**, marque **Permitir execução do arquivo como programa** e dê um duplo clique. Roda em PCs de 64 bits com glibc 2.39 ou mais nova (Ubuntu 24.04, Linux Mint 22, Debian 13, Fedora 40 ou posteriores). Se reclamar do FUSE, instale o `libfuse2` (`sudo apt install libfuse2t64` no Ubuntu 24.04 e no Mint 22) ou execute com `--appimage-extract-and-run`.
 
 # Uso
 
@@ -170,6 +200,14 @@ cmake --build build -j
 ```
 
 A imagem da moldura (`tk2000-frame.png`) é copiada ao lado do binário, então o emulador também pode ser executado de qualquer outro diretório.
+
+Para gerar um AppImage (`dist/TK2000-<versão>-x86_64.AppImage`) com o SDL embutido, para enviar a outras pessoas (também precisa do `python3-pil` e do `curl`, e baixa o [linuxdeploy](https://github.com/linuxdeploy/linuxdeploy) na primeira vez):
+
+```sh
+packaging/linux/make-appimage.sh 1.1
+```
+
+O AppImage roda em distribuições com a mesma glibc do sistema usado na compilação ou mais nova, então compile na distribuição mais antiga que quiser suportar.
 
 # Problemas conhecidos
 
