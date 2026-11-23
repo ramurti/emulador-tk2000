@@ -2,6 +2,7 @@
 out
 build/
 build-release/
+build-windows/
 dist/
 *.gch
 data/
