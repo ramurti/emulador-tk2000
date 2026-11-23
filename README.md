@@ -67,6 +67,26 @@ packaging/macos/make-dmg.sh 1.1
 
 The app runs on the same architecture and minimum macOS version as the Homebrew SDL libraries used to build it.
 
+## Building on Linux
+
+Install a C++17 compiler, CMake and the SDL2 development package:
+
+```sh
+sudo apt install g++ cmake libsdl2-dev        # Debian, Ubuntu, Mint
+sudo dnf install gcc-c++ cmake SDL2-devel     # Fedora
+sudo pacman -S gcc cmake sdl2                 # Arch
+```
+
+From the repository root, configure, build and run:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+./build/src/tk2000
+```
+
+The frame picture (`tk2000-frame.png`) is copied next to the binary, so the emulator can also be run from any other directory.
+
 # Known issues
 
 There is a problem with sound generation, there may be some glitches during sound playback. This problem remains unresolved for now.
@@ -130,6 +150,26 @@ packaging/macos/make-dmg.sh 1.1
 ```
 
 O app roda na mesma arquitetura e versão mínima do macOS das bibliotecas SDL do Homebrew usadas na compilação.
+
+## Compilação no Linux
+
+Instale um compilador C++17, o CMake e o pacote de desenvolvimento do SDL2:
+
+```sh
+sudo apt install g++ cmake libsdl2-dev        # Debian, Ubuntu, Mint
+sudo dnf install gcc-c++ cmake SDL2-devel     # Fedora
+sudo pacman -S gcc cmake sdl2                 # Arch
+```
+
+Na raiz do repositório, configure, compile e execute:
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+./build/src/tk2000
+```
+
+A imagem da moldura (`tk2000-frame.png`) é copiada ao lado do binário, então o emulador também pode ser executado de qualquer outro diretório.
 
 # Problemas conhecidos
 
