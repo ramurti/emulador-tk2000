@@ -16,6 +16,7 @@
 
 #include "pch.h"
 #include "Tape.h"
+#include <cmath>
 
 #define CT2_MAGIC "CTK2"
 #define CT2_CAB_A "CA"

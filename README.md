@@ -29,6 +29,12 @@ chmod +x TK2000-*-x86_64.AppImage
 
 or, in the file manager, open **Properties > Permissions**, check **Allow executing file as program** and double-click it. It runs on 64-bit PCs with glibc 2.39 or newer (Ubuntu 24.04, Linux Mint 22, Debian 13, Fedora 40 or later). If it complains about FUSE, install `libfuse2` (`sudo apt install libfuse2t64` on Ubuntu 24.04 and Mint 22) or run it with `--appimage-extract-and-run`.
 
+# Download (Windows)
+
+The Windows version is on the [Releases page](https://github.com/ramurti/emulador-tk2000/releases/latest) too: download `TK2000-<version>-windows-x64.zip`, extract it anywhere (keep the files together) and double-click `tk2000.exe`. It runs on 64-bit Windows 10 and 11.
+
+The program is not signed with a code-signing certificate, so the first time Windows shows "Windows protected your PC": click **More info** and then **Run anyway**. After that it opens normally.
+
 # Usage
 
 Download the latest release and unzip it to a folder, no installation required. To use SDL2 it is necessary that some libraries (supplied) are included with the binary.
@@ -108,6 +114,22 @@ packaging/linux/make-appimage.sh 1.1
 
 The AppImage runs on distributions with the same or a newer glibc than the system used to build it, so build it on the oldest distribution you want to support.
 
+## Building for Windows
+
+The Windows version is cross-compiled on Linux with MinGW-w64, without a Windows PC. Install it, CMake, Pillow and zip:
+
+```sh
+sudo apt install g++-mingw-w64-x86-64 cmake python3-pil curl zip
+```
+
+Then create `dist/TK2000-<version>-windows-x64.zip` with `tk2000.exe`, `SDL2.dll` and the frame picture (it downloads the [SDL2 MinGW package](https://github.com/libsdl-org/SDL/releases) the first time):
+
+```sh
+packaging/windows/make-zip.sh 1.1
+```
+
+To test it on Linux with Wine: `wine dist/TK2000-1.1-windows-x64/tk2000.exe`.
+
 # Known issues
 
 There is a problem with sound generation, there may be some glitches during sound playback. This problem remains unresolved for now.
@@ -138,6 +160,12 @@ chmod +x TK2000-*-x86_64.AppImage
 ```
 
 ou, no gerenciador de arquivos, abra **Propriedades > Permissões**, marque **Permitir execução do arquivo como programa** e dê um duplo clique. Roda em PCs de 64 bits com glibc 2.39 ou mais nova (Ubuntu 24.04, Linux Mint 22, Debian 13, Fedora 40 ou posteriores). Se reclamar do FUSE, instale o `libfuse2` (`sudo apt install libfuse2t64` no Ubuntu 24.04 e no Mint 22) ou execute com `--appimage-extract-and-run`.
+
+# Download (Windows)
+
+A versão para Windows também está na [página de Releases](https://github.com/ramurti/emulador-tk2000/releases/latest): baixe `TK2000-<versão>-windows-x64.zip`, extraia em qualquer pasta (mantenha os arquivos juntos) e dê um duplo clique no `tk2000.exe`. Roda no Windows 10 e 11 de 64 bits.
+
+O programa não é assinado com um certificado de assinatura de código, então na primeira vez o Windows mostra "O Windows protegeu o computador": clique em **Mais informações** e depois em **Executar assim mesmo**. Depois disso ele abre normalmente.
 
 # Uso
 
@@ -212,6 +240,22 @@ packaging/linux/make-appimage.sh 1.1
 ```
 
 O AppImage roda em distribuições com a mesma glibc do sistema usado na compilação ou mais nova, então compile na distribuição mais antiga que quiser suportar.
+
+## Compilação para Windows
+
+A versão para Windows é compilada no Linux com o MinGW-w64 (compilação cruzada), sem precisar de um PC com Windows. Instale-o, o CMake, o Pillow e o zip:
+
+```sh
+sudo apt install g++-mingw-w64-x86-64 cmake python3-pil curl zip
+```
+
+Depois gere o `dist/TK2000-<versão>-windows-x64.zip` com o `tk2000.exe`, o `SDL2.dll` e a imagem da moldura (baixa o [pacote MinGW do SDL2](https://github.com/libsdl-org/SDL/releases) na primeira vez):
+
+```sh
+packaging/windows/make-zip.sh 1.1
+```
+
+Para testar no Linux com o Wine: `wine dist/TK2000-1.1-windows-x64/tk2000.exe`.
 
 # Problemas conhecidos
 

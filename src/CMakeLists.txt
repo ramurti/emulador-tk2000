@@ -46,3 +46,10 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png"
   COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/res/tk2000-frame.png" "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png"
   DEPENDS "${PROJECT_SOURCE_DIR}/res/tk2000-frame.png")
 add_custom_target(tk2000-frame ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/tk2000-frame.png")
+
+# Windows: icon embedded in the executable (TK2000_ICON is a .ico file, given by packaging/windows/make-zip.sh)
+if (WIN32 AND TK2000_ICON)
+  enable_language(RC)
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/tk2000.rc" "IDI_ICON1 ICON \"${TK2000_ICON}\"\n")
+  target_sources(tk2000 PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/tk2000.rc")
+endif()
