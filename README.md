@@ -45,6 +45,8 @@ What a program saves on tape (`SAVET` in BASIC, or any program using the ROM's t
 
 "Frame" in the menu (or F9) changes the picture around the screen: the TK2000 with its monitor (at start), the monitor and the TK2000 label only (without the keyboard), or none.
 
+"Full screen" in the menu (or F8) fills the whole screen with the emulator, without the window title bar or the desktop panel; choose it again (or press F8) to go back to the window. On Linux, maximizing the window keeps the title bar and the panel, so use this instead.
+
 # Development
 
 I developed the emulator in MS Visual Studio Community 2022 (MSVC22). Make a clone of the repository and open the root directory in MSVC22 to be able to work on the sources.
@@ -152,6 +154,8 @@ O que um programa grava em fita (`SAVET` no BASIC, ou qualquer programa que use 
 "Scan lines" no menu (ou F7) alterna um efeito leve de linhas de varredura de TV: desligado, a parte de baixo de cada linha da imagem 25% mais escura, depois 35% mais escura, depois desligado de novo. Começa desligado ao abrir o emulador.
 
 "Frame" no menu (ou F9) muda a imagem em volta da tela: o TK2000 com o monitor (ao abrir), só o monitor e a faixa TK2000 (sem o teclado), ou nenhuma.
+
+"Full screen" no menu (ou F8) ocupa a tela inteira com o emulador, sem a barra de título da janela nem o painel da área de trabalho; escolha de novo (ou aperte F8) para voltar à janela. No Linux, maximizar a janela mantém a barra de título e o painel, então use esta opção.
 
 # Desenvolvimento
 

@@ -20,7 +20,7 @@
 
 /* Constants */
 
-TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file", "Insert disk", "Eject disk", "Scan lines (F7)", "Frame (F9)" };
+TMenuLst mainLst{ "Start", "Soft Reset (F5)", "Hard reset", "CPU speed", "Insert tape", "Play tape (F6)", "Rewind tape", "Record tape (WAV)", "Type BASIC file", "Insert disk", "Eject disk", "Scan lines (F7)", "Frame (F9)", "Full screen (F8)" };
 TMenuLst cpuSpeedLst{ "1 MHz", "2 MHz", "Full speed" };
 TMenuLst filesLst{ "." };
 TMenuLst msgLst{ "OK" };
@@ -166,6 +166,7 @@ void CMachine::notify(SDL_KeyboardEvent& e) {
 					mWindow.getScanline() == 25 ? "Scan lines: 25% (F7)" : "Scan lines: 35% (F7)";
 				mMainMenu->getMenuLst()[12] = mWindow.getFrameMode() == EFrameMode::Full ? "Frame: TK2000 and monitor (F9)" :
 					mWindow.getFrameMode() == EFrameMode::Monitor ? "Frame: monitor (F9)" : "Frame: off (F9)";
+				mMainMenu->getMenuLst()[13] = mWindow.getFullScreen() ? "Full screen: on (F8)" : "Full screen: off (F8)";
 				mWindow.setMenu(mMainMenu);
 			}
 			processed = true;
@@ -315,6 +316,10 @@ bool CMachine::loop() {
 
 				case 12:							// Frame: TK2000 and monitor, monitor only, off
 					mWindow.nextFrameMode();
+					break;
+
+				case 13:							// Full screen: on or off
+					mWindow.toggleFullScreen();
 					break;
 				}
 			} else if (mWindow.getMenu() == mCpuMenu) {

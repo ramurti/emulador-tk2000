@@ -36,6 +36,16 @@ int CWindowSDL::getScanline() const noexcept {
 }
 
 /*****************************************************************************/
+bool CWindowSDL::getFullScreen() const noexcept {
+	return mFullScreen;
+}
+
+/*****************************************************************************/
+void CWindowSDL::toggleFullScreen() noexcept {
+	setFullScreen(!mFullScreen);
+}
+
+/*****************************************************************************/
 void CWindowSDL::setFullScreen(bool val) noexcept {
 	mFullScreen = val;
 	SDL_SetWindowFullscreen(mWindow, mFullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
@@ -325,7 +335,7 @@ bool CWindowSDL::loop() {
 				break;
 
 			case SDLK_F8:
-				setFullScreen(!mFullScreen);
+				toggleFullScreen();
 				processed = true;
 				break;
 
