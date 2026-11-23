@@ -61,6 +61,8 @@ public:
 	void setFrameMode(EFrameMode mode) noexcept;
 	EFrameMode getFrameMode() const noexcept;
 	void nextFrameMode() noexcept;
+	bool getFullScreen() const noexcept;
+	void toggleFullScreen() noexcept;	// borderless full screen over the whole display, or back to the window
 	bool loop();
 	SDL_Window* getWindow() const;
 	SDL_Renderer* getRenderer() const;
